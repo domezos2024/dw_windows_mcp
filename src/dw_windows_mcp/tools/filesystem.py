@@ -3,11 +3,15 @@ root directories (and their subpaths); if unset, the whole filesystem is in
 scope for the roles that have filesystem_write/read permission."""
 from __future__ import annotations
 
+import difflib
+import hashlib
+import re
 import shutil
 from pathlib import Path
 
 from ..auth.rbac import ToolCategory
 from ..config import settings
+from ..confirm import require_confirmation
 from ..db import User
 from . import tool
 
@@ -128,3 +132,84 @@ def delete(user: User, path: str, confirm_token: str | None = None) -> dict:
     else:
         p.unlink()
     return {"deleted": str(p)}
+
+
+def _hash_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        while chunk := f.read(chunk_size):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+@tool(
+    name="fs.compare_files",
+    category=ToolCategory.FILESYSTEM_READ,
+    description="Vergleicht zwei Dateien (Hash-Gleichheit + Text-Diff falls Textdatei).",
+)
+def compare_files(user: User, path_a: str, path_b: str) -> dict:
+    a = _check_allowed(path_a)
+    b = _check_allowed(path_b)
+    size_a, size_b = a.stat().st_size, b.stat().st_size
+    identical = size_a == size_b and _hash_file(a) == _hash_file(b)
+
+    diff_lines: list[str] | None = None
+    if not identical and size_a < 2 * 1024 * 1024 and size_b < 2 * 1024 * 1024:
+        try:
+            text_a = a.read_text(encoding="utf-8", errors="strict").splitlines(keepends=True)
+            text_b = b.read_text(encoding="utf-8", errors="strict").splitlines(keepends=True)
+            diff_lines = list(difflib.unified_diff(text_a, text_b, fromfile=str(a), tofile=str(b)))[:500]
+        except UnicodeDecodeError:
+            diff_lines = None  # binary file — no text diff
+
+    return {
+        "identical": identical,
+        "size_a": size_a,
+        "size_b": size_b,
+        "diff": diff_lines,
+    }
+
+
+@tool(
+    name="fs.batch_rename",
+    category=ToolCategory.FILESYSTEM_WRITE,
+    description="Benennt mehrere Dateien in einem Verzeichnis per Regex-Suchen/Ersetzen um. "
+    "dry_run=true (Standard) zeigt nur die geplanten Umbenennungen, ohne sie auszuführen "
+    "(kein Confirm-Token nötig). Erst dry_run=false führt sie aus und erfordert einen Confirm-Token.",
+)
+def batch_rename(
+    user: User,
+    directory: str,
+    pattern: str,
+    replacement: str,
+    dry_run: bool = True,
+    confirm_token: str | None = None,
+) -> dict:
+    d = _check_allowed(directory)
+    regex = re.compile(pattern)
+    planned = []
+    for entry in d.iterdir():
+        if not entry.is_file():
+            continue
+        new_name = regex.sub(replacement, entry.name)
+        if new_name != entry.name:
+            planned.append({"old": entry.name, "new": new_name})
+
+    if dry_run:
+        return {"dry_run": True, "planned_renames": planned}
+
+    # Nur die tatsächliche Ausführung (dry_run=false) braucht einen Confirm-Token.
+    require_confirmation(
+        user,
+        "fs.batch_rename",
+        {"directory": directory, "pattern": pattern, "replacement": replacement, "confirm_token": confirm_token},
+        f"Benennt {len(planned)} Datei(en) in '{d}' gemäß Muster '{pattern}' -> '{replacement}' um.",
+    )
+
+    executed = []
+    for item in planned:
+        src = d / item["old"]
+        dst = d / item["new"]
+        src.rename(dst)
+        executed.append(item)
+    return {"dry_run": False, "renamed": executed}

@@ -146,5 +146,117 @@ def fake_psutil_process(monkeypatch):
     return killed
 
 
+@pytest.fixture
+def fake_pyautogui(monkeypatch):
+    """Injects a fake pyautogui module so gui.* tools never move the real
+    mouse, type into the real focused window, or screenshot the real screen."""
+    import sys
+    import types
+
+    calls: list[tuple] = []
+    fake = types.ModuleType("pyautogui")
+
+    def _record(name):
+        def _fn(*args, **kwargs):
+            calls.append((name, args, kwargs))
+
+        return _fn
+
+    fake.moveTo = _record("moveTo")
+    fake.click = _record("click")
+    fake.write = _record("write")
+    fake.hotkey = _record("hotkey")
+
+    class _FakeImage:
+        width, height = 10, 10
+
+        def save(self, buf, format):
+            buf.write(b"\x89PNG\r\n\x1a\nFAKE")
+
+    fake.screenshot = lambda: _FakeImage()
+
+    monkeypatch.setitem(sys.modules, "pyautogui", fake)
+    return calls
+
+
+@pytest.fixture
+def fake_win32com(monkeypatch):
+    """Injects a fake win32com.client so tts.* tools never speak out loud or
+    touch the real SAPI engine during tests."""
+    import sys
+    import types
+
+    calls: list[tuple] = []
+
+    class FakeSpVoice:
+        def __init__(self):
+            self.Rate = 0
+            self.Volume = 100
+            self.AudioOutputStream = None
+
+        def Speak(self, text):
+            calls.append(("Speak", text))
+
+    class FakeSpFileStream:
+        def Open(self, path, mode, *a):
+            calls.append(("Open", path, mode))
+            with open(path, "wb") as f:
+                f.write(b"RIFF_FAKE_WAV")
+
+        def Close(self):
+            calls.append(("Close",))
+
+    def dispatch(name):
+        if name == "SAPI.SpVoice":
+            return FakeSpVoice()
+        if name == "SAPI.SpFileStream":
+            return FakeSpFileStream()
+        raise ValueError(f"unexpected Dispatch target: {name}")
+
+    client_module = types.ModuleType("win32com.client")
+    client_module.Dispatch = dispatch
+    win32com_module = types.ModuleType("win32com")
+    win32com_module.client = client_module
+
+    monkeypatch.setitem(sys.modules, "win32com", win32com_module)
+    monkeypatch.setitem(sys.modules, "win32com.client", client_module)
+    return calls
+
+
+@pytest.fixture
+def fake_urlopen(monkeypatch):
+    """Replaces urllib.request.urlopen everywhere under dw_windows_mcp.tools
+    with a scripted fake response, so network.* tools never make a real
+    internet request during tests."""
+    import urllib.request
+
+    class FakeResponse:
+        def __init__(self, body: bytes, status: int = 200, headers: dict | None = None):
+            self._body = body
+            self.status = status
+            self.headers = headers or {}
+
+        def read(self, n: int | None = None):
+            if n is None:
+                data, self._body = self._body, b""
+                return data
+            data, self._body = self._body[:n], self._body[n:]
+            return data
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    state = {"response": FakeResponse(b"")}
+
+    def fake_urlopen(req, timeout=None):
+        return state["response"]
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    return state
+
+
 def pytest_sessionfinish(session, exitstatus):
     shutil.rmtree(_TEST_DATA_DIR, ignore_errors=True)

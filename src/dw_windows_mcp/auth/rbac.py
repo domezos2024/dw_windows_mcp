@@ -20,9 +20,13 @@ class ToolCategory:
     SERVICES_WRITE = "services_write"
     POWER = "power"
     NETWORK_READ = "network_read"
+    NETWORK_WRITE = "network_write"
     INSTALL = "install"
     GUI_AUTOMATION = "gui_automation"
     CLIPBOARD = "clipboard"
+    AUDIO = "audio"
+    MEMORY_READ = "memory_read"
+    MEMORY_WRITE = "memory_write"
 
 
 # Role -> set of categories it may invoke at all.
@@ -35,6 +39,7 @@ ROLE_CATEGORIES: dict[Role, set[str]] = {
         ToolCategory.SERVICES_READ,
         ToolCategory.NETWORK_READ,
         ToolCategory.CLIPBOARD,
+        ToolCategory.MEMORY_READ,
     },
     Role.STANDARD: {
         ToolCategory.SYSTEM_INFO,
@@ -45,9 +50,13 @@ ROLE_CATEGORIES: dict[Role, set[str]] = {
         ToolCategory.REGISTRY_READ,
         ToolCategory.SERVICES_READ,
         ToolCategory.NETWORK_READ,
+        ToolCategory.NETWORK_WRITE,
         ToolCategory.INSTALL,
         ToolCategory.GUI_AUTOMATION,
         ToolCategory.CLIPBOARD,
+        ToolCategory.AUDIO,
+        ToolCategory.MEMORY_READ,
+        ToolCategory.MEMORY_WRITE,
     },
     Role.ADMIN: {
         ToolCategory.SYSTEM_INFO,
@@ -61,9 +70,13 @@ ROLE_CATEGORIES: dict[Role, set[str]] = {
         ToolCategory.SERVICES_WRITE,
         ToolCategory.POWER,
         ToolCategory.NETWORK_READ,
+        ToolCategory.NETWORK_WRITE,
         ToolCategory.INSTALL,
         ToolCategory.GUI_AUTOMATION,
         ToolCategory.CLIPBOARD,
+        ToolCategory.AUDIO,
+        ToolCategory.MEMORY_READ,
+        ToolCategory.MEMORY_WRITE,
     },
 }
 

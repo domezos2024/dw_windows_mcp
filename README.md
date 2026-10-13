@@ -18,13 +18,24 @@ Claude Desktop/Code) und remote (HTTP/SSE mit OAuth2, z.B. vom Smartphone).
 | Registry | `registry.read_value`, `registry.list_values`, `registry.write_value`*, `registry.delete_value`* |
 | Dienste | `services.list`, `services.start`, `services.stop`*, `services.restart`* |
 | Power | `power.lock`, `power.shutdown`*, `power.restart`*, `power.sleep`*, `power.cancel_shutdown` |
-| Netzwerk | `network.info`, `network.connections`, `network.ping` |
+| Netzwerk/Internet | `network.info`, `network.connections`, `network.ping`, `network.http_request`†, `network.download_file`†, `network.search_web` |
 | Installation | `install.search`, `install.install`*, `install.uninstall`*, `install.list_installed` |
 | Zwischenablage | `clipboard.get`, `clipboard.set` |
-| GUI-Automation | `gui.screenshot`, `gui.mouse_click`, `gui.type_text`, `gui.key_press` |
+| GUI-Automation | `gui.screenshot`, `gui.mouse_move`, `gui.mouse_click`, `gui.type_text`, `gui.key_press` |
+| Sprachausgabe (TTS) | `tts.speak`, `tts.text_to_wav`, `tts.text_to_mp3` (benötigt ffmpeg) |
+| Dokumente | `documents.create_markdown`, `documents.create_docx`, `documents.create_xlsx`, `documents.create_pptx` |
+| Memory (Key/Value) | `memory.set`, `memory.get`, `memory.list`, `memory.delete` |
+| Dateisystem (erweitert) | `fs.batch_rename` (Regex, dry-run-sicher)*, `fs.compare_files` |
 
 \* destruktiv — erfordert zwingend einen Confirm-Token (siehe unten), außer der
-aufrufende Admin hat `skip_confirmation` aktiviert.
+aufrufende Admin hat `skip_confirmation` aktiviert. `fs.batch_rename` ist nur
+bei `dry_run=false` (tatsächliche Ausführung) confirm-pflichtig — mit
+`dry_run=true` (Standard) zeigt es nur die geplanten Umbenennungen, ohne
+etwas zu verändern.
+
+† benötigt die Rolle `standard` oder `admin` (Kategorie `network_write` —
+beliebige HTTP-Requests/Downloads ins Internet gelten als genauso
+weitreichend wie Software-Installation).
 
 ## Sicherheitsmodell
 

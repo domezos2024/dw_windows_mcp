@@ -98,6 +98,11 @@ def invoke_tool(user: User, tool_name: str, arguments: dict, client_addr: str | 
         sig = inspect.signature(reg.func)
         accepted = {k: v for k, v in arguments.items() if k in sig.parameters}
         result = reg.func(user, **accepted)
+    except ConfirmationRequired as cr:
+        # Tools that gate confirmation conditionally (e.g. only when dry_run=False)
+        # call require_confirmation() themselves instead of via spec.destructive.
+        audit_log(user.username, tool_name, arguments, "confirm_required", f"token={cr.token}", client_addr)
+        raise
     except Exception as e:
         audit_log(user.username, tool_name, arguments, "error", str(e), client_addr)
         raise
@@ -108,10 +113,13 @@ def invoke_tool(user: User, tool_name: str, arguments: dict, client_addr: str | 
 
 # Import tool modules so their @tool decorators register on package import.
 from . import (
+    audio,  # noqa: F401
     clipboard,  # noqa: F401
+    documents,  # noqa: F401
     filesystem,  # noqa: F401
     gui,  # noqa: F401
     install,  # noqa: F401
+    memory,  # noqa: F401
     network,  # noqa: F401
     power,  # noqa: F401
     process,  # noqa: F401

@@ -18,13 +18,24 @@ Desktop/Code) and remotely (HTTP/SSE with OAuth2, e.g. from a phone).
 | Registry | `registry.read_value`, `registry.list_values`, `registry.write_value`*, `registry.delete_value`* |
 | Services | `services.list`, `services.start`, `services.stop`*, `services.restart`* |
 | Power | `power.lock`, `power.shutdown`*, `power.restart`*, `power.sleep`*, `power.cancel_shutdown` |
-| Network | `network.info`, `network.connections`, `network.ping` |
+| Network/Internet | `network.info`, `network.connections`, `network.ping`, `network.http_request`†, `network.download_file`†, `network.search_web` |
 | Installation | `install.search`, `install.install`*, `install.uninstall`*, `install.list_installed` |
 | Clipboard | `clipboard.get`, `clipboard.set` |
-| GUI automation | `gui.screenshot`, `gui.mouse_click`, `gui.type_text`, `gui.key_press` |
+| GUI automation | `gui.screenshot`, `gui.mouse_move`, `gui.mouse_click`, `gui.type_text`, `gui.key_press` |
+| Text-to-speech | `tts.speak`, `tts.text_to_wav`, `tts.text_to_mp3` (needs ffmpeg) |
+| Documents | `documents.create_markdown`, `documents.create_docx`, `documents.create_xlsx`, `documents.create_pptx` |
+| Memory (key/value) | `memory.set`, `memory.get`, `memory.list`, `memory.delete` |
+| Filesystem (extra) | `fs.batch_rename` (regex, dry-run safe)*, `fs.compare_files` |
 
 \* destructive — always requires a confirm-token (see below), unless the
-calling admin has `skip_confirmation` enabled.
+calling admin has `skip_confirmation` enabled. `fs.batch_rename` only
+requires it when actually executing (`dry_run=false`) — with the default
+`dry_run=true` it just previews the planned renames without changing
+anything.
+
+† requires the `standard` or `admin` role (category `network_write` —
+arbitrary outbound HTTP requests/downloads are treated as being just as
+far-reaching as installing software).
 
 ## Security model
 

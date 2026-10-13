@@ -12,6 +12,7 @@ from sqlalchemy import (
     ForeignKey,
     String,
     Text,
+    UniqueConstraint,
     create_engine,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
@@ -87,6 +88,20 @@ class AuditLog(Base):
     outcome: Mapped[str] = mapped_column(String(20))  # success | denied | error | confirm_required
     detail: Mapped[str] = mapped_column(Text, default="")
     client_addr: Mapped[str] = mapped_column(String(100), nullable=True)
+
+
+class KVEntry(Base):
+    """Simple per-user key/value memory store, grouped by namespace."""
+
+    __tablename__ = "kv_entries"
+    __table_args__ = (UniqueConstraint("username", "namespace", "key", name="uq_kv_user_ns_key"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    username: Mapped[str] = mapped_column(String(100), index=True)
+    namespace: Mapped[str] = mapped_column(String(100), default="default")
+    key: Mapped[str] = mapped_column(String(200))
+    value: Mapped[str] = mapped_column(Text)
+    updated_at: Mapped[dt.datetime] = mapped_column(DateTime, default=utcnow)
 
 
 engine = create_engine(settings.db_url, echo=False, future=True)

@@ -11,6 +11,9 @@
 > may not yet ship prebuilt wheels for Python 3.14 at the time of this
 > release. If installation fails, use Python 3.11–3.13.
 
+> **Optional, for `tts.text_to_mp3`:** `ffmpeg` on PATH. Without ffmpeg,
+> `tts.text_to_wav` still works fully (WAV instead of MP3).
+
 ## 1. Clone the repository
 
 ```powershell

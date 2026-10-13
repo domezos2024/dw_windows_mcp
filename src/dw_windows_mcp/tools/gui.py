@@ -24,6 +24,18 @@ def screenshot(user: User) -> dict:
 
 
 @tool(
+    name="gui.mouse_move",
+    category=ToolCategory.GUI_AUTOMATION,
+    description="Bewegt die Maus an eine Position, ohne zu klicken.",
+)
+def mouse_move(user: User, x: int, y: int, duration_seconds: float = 0.0) -> dict:
+    import pyautogui
+
+    pyautogui.moveTo(x, y, duration=duration_seconds)
+    return {"x": x, "y": y}
+
+
+@tool(
     name="gui.mouse_click",
     category=ToolCategory.GUI_AUTOMATION,
     description="Bewegt die Maus an eine Position und klickt (left/right/middle).",

@@ -12,6 +12,9 @@
 > noch keine fertigen Wheels. Falls die Installation fehlschlägt, nutze
 > Python 3.11–3.13.
 
+> **Optional für `tts.text_to_mp3`:** `ffmpeg` auf dem PATH. Ohne ffmpeg
+> funktioniert `tts.text_to_wav` trotzdem uneingeschränkt (WAV statt MP3).
+
 ## 1. Repository holen
 
 ```powershell
