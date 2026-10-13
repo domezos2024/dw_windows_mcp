@@ -18,12 +18,12 @@ from dataclasses import dataclass
 from sqlalchemy import select
 
 from ..config import settings
-from ..db import OAuthClient, OAuthToken, User, get_session
+from ..db import OAuthClient, OAuthToken, User, get_session, utcnow
 from .users import authenticate, hash_password, verify_password
 
 # In-memory store for short-lived authorization codes (PKCE). Fine for a single
 # process instance; codes live at most a couple of minutes.
-_auth_codes: dict[str, "AuthCode"] = {}
+_auth_codes: dict[str, AuthCode] = {}
 
 
 @dataclass
@@ -97,7 +97,7 @@ def start_authorization_code(
         redirect_uri=redirect_uri,
         code_challenge=code_challenge,
         code_challenge_method=code_challenge_method or "plain",
-        expires_at=dt.datetime.utcnow() + dt.timedelta(minutes=5),
+        expires_at=utcnow() + dt.timedelta(minutes=5),
         scope=scope,
     )
     return code
@@ -116,7 +116,7 @@ def _pkce_matches(verifier: str, challenge: str, method: str) -> bool:
 def _issue_token(user: User, client_id: str, scope: str = "") -> dict:
     access_token = secrets.token_urlsafe(32)
     refresh_token = secrets.token_urlsafe(32)
-    now = dt.datetime.utcnow()
+    now = utcnow()
     with get_session() as s:
         s.add(
             OAuthToken(
@@ -154,7 +154,7 @@ def grant_authorization_code(
     if not entry or entry.client_id != client_id:
         raise OAuthError("invalid_grant", "Unbekannter oder abgelaufener Code")
     del _auth_codes[code]
-    if dt.datetime.utcnow() > entry.expires_at:
+    if utcnow() > entry.expires_at:
         raise OAuthError("invalid_grant", "Code abgelaufen")
     if entry.redirect_uri != redirect_uri:
         raise OAuthError("invalid_grant", "redirect_uri stimmt nicht")
@@ -173,7 +173,7 @@ def grant_refresh_token(refresh_token: str, client_id: str) -> dict:
             select(OAuthToken).where(
                 OAuthToken.refresh_token == refresh_token,
                 OAuthToken.client_id == client_id,
-                OAuthToken.revoked == False,  # noqa: E712
+                OAuthToken.revoked == False,
             )
         )
         if not tok:
@@ -191,7 +191,7 @@ def resolve_access_token(access_token: str) -> User | None:
         tok = s.scalar(select(OAuthToken).where(OAuthToken.access_token == access_token))
         if not tok or tok.revoked:
             return None
-        if dt.datetime.utcnow() > tok.expires_at:
+        if utcnow() > tok.expires_at:
             return None
         return s.get(User, tok.user_id)
 

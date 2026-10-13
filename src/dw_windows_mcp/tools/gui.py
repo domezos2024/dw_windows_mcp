@@ -4,8 +4,8 @@ from __future__ import annotations
 import base64
 import io
 
-from ..db import User
 from ..auth.rbac import ToolCategory
+from ..db import User
 from . import tool
 
 

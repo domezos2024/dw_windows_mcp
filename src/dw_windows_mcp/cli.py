@@ -3,13 +3,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 
 from .auth import oauth
 from .auth.users import (
     bootstrap_admin_interactive,
     create_user,
-    get_user_by_username,
     set_skip_confirmation,
 )
 from .db import AuditLog, Role, get_session, init_db
@@ -74,6 +72,26 @@ def cmd_run_http(args: argparse.Namespace) -> None:
     uvicorn.run("dw_windows_mcp.http_app:app", host=args.host, port=args.port, log_level="info")
 
 
+def cmd_install_autostart(args: argparse.Namespace) -> None:
+    from . import autostart
+
+    autostart.install(host=args.host, port=args.port)
+    print(f"Autostart-Task '{autostart.TASK_NAME}' angelegt (Start bei Login, Port {args.port}).")
+
+
+def cmd_uninstall_autostart(args: argparse.Namespace) -> None:
+    from . import autostart
+
+    autostart.uninstall()
+    print(f"Autostart-Task '{autostart.TASK_NAME}' entfernt.")
+
+
+def cmd_autostart_status(args: argparse.Namespace) -> None:
+    from . import autostart
+
+    print(autostart.status())
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="dw-windows-mcp")
     sub = p.add_subparsers(dest="command", required=True)
@@ -113,6 +131,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_http.add_argument("--host", default="0.0.0.0")
     p_http.add_argument("--port", type=int, default=8765)
     p_http.set_defaults(func=cmd_run_http)
+
+    p_install_auto = sub.add_parser(
+        "install-autostart", help="Registriert den HTTP-Server als Windows-Autostart-Task (Login-Trigger)"
+    )
+    p_install_auto.add_argument("--host", default="0.0.0.0")
+    p_install_auto.add_argument("--port", type=int, default=8765)
+    p_install_auto.set_defaults(func=cmd_install_autostart)
+
+    sub.add_parser("uninstall-autostart", help="Entfernt den Autostart-Task").set_defaults(
+        func=cmd_uninstall_autostart
+    )
+    sub.add_parser("autostart-status", help="Zeigt den Status des Autostart-Tasks").set_defaults(
+        func=cmd_autostart_status
+    )
 
     return p
 

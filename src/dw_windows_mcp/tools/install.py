@@ -3,14 +3,15 @@ from __future__ import annotations
 
 import subprocess
 
-from ..db import User
 from ..auth.rbac import ToolCategory
+from ..db import User
 from . import tool
 
 
 def _winget(*args: str, timeout: int = 300) -> str:
     proc = subprocess.run(
         ["winget", *args, "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity"],
+        check=False,
         capture_output=True,
         text=True,
         timeout=timeout,

@@ -5,8 +5,8 @@ import subprocess
 
 import psutil
 
-from ..db import User
 from ..auth.rbac import ToolCategory
+from ..db import User
 from . import tool
 
 
@@ -23,7 +23,7 @@ def list_services(user: User) -> list[dict]:
 
 
 def _sc(*args: str) -> str:
-    proc = subprocess.run(["sc", *args], capture_output=True, text=True, timeout=30)
+    proc = subprocess.run(["sc", *args], check=False, capture_output=True, text=True, timeout=30)
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.strip() or proc.stdout.strip())
     return proc.stdout

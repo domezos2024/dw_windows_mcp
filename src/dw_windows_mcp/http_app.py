@@ -6,16 +6,15 @@ from __future__ import annotations
 import contextlib
 import logging
 
+from mcp.server.sse import SseServerTransport
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.routing import Mount, Route
 
-from mcp.server.sse import SseServerTransport
-
 from .auth import oauth
 from .auth.users import authenticate
-from .db import User, init_db
+from .db import init_db
 from .mcp_core import current_client_addr, current_user, server
 
 logger = logging.getLogger("dw_windows_mcp.http")
@@ -99,14 +98,14 @@ _AUTHORIZE_FORM = """<!doctype html><html><body>
 
 async def oauth_authorize(request: Request) -> Response:
     q = request.query_params
-    ctx = dict(
-        client_id=q.get("client_id", ""),
-        redirect_uri=q.get("redirect_uri", ""),
-        code_challenge=q.get("code_challenge", ""),
-        code_challenge_method=q.get("code_challenge_method", "S256"),
-        state=q.get("state", ""),
-        scope=q.get("scope", ""),
-    )
+    ctx = {
+        "client_id": q.get("client_id", ""),
+        "redirect_uri": q.get("redirect_uri", ""),
+        "code_challenge": q.get("code_challenge", ""),
+        "code_challenge_method": q.get("code_challenge_method", "S256"),
+        "state": q.get("state", ""),
+        "scope": q.get("scope", ""),
+    }
 
     if request.method == "GET":
         return HTMLResponse(_AUTHORIZE_FORM.format(**ctx))

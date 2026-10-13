@@ -3,13 +3,12 @@ root directories (and their subpaths); if unset, the whole filesystem is in
 scope for the roles that have filesystem_write/read permission."""
 from __future__ import annotations
 
-import os
 import shutil
 from pathlib import Path
 
+from ..auth.rbac import ToolCategory
 from ..config import settings
 from ..db import User
-from ..auth.rbac import ToolCategory
 from . import tool
 
 
@@ -20,9 +19,8 @@ class FsAccessDenied(Exception):
 def _check_allowed(path: str) -> Path:
     p = Path(path).resolve()
     roots = settings.allowed_fs_roots
-    if roots:
-        if not any(str(p).lower().startswith(str(Path(r).resolve()).lower()) for r in roots):
-            raise FsAccessDenied(f"Pfad '{p}' liegt außerhalb der erlaubten Wurzeln: {roots}")
+    if roots and not any(str(p).lower().startswith(str(Path(r).resolve()).lower()) for r in roots):
+        raise FsAccessDenied(f"Pfad '{p}' liegt außerhalb der erlaubten Wurzeln: {roots}")
     return p
 
 

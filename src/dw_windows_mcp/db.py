@@ -23,6 +23,12 @@ class Base(DeclarativeBase):
     pass
 
 
+def utcnow() -> dt.datetime:
+    """Naive UTC timestamp (SQLite's DateTime column strips tzinfo on
+    round-trip, so every comparison in this codebase must stay naive too)."""
+    return dt.datetime.now(dt.UTC).replace(tzinfo=None)
+
+
 class Role(str, enum.Enum):
     ADMIN = "admin"
     STANDARD = "standard"
@@ -40,9 +46,9 @@ class User(Base):
     # Admin-only opt-out: when True, this user's destructive-tool calls skip the
     # confirm-token step. Ignored/forced-False for non-admin roles.
     skip_confirmation: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=utcnow)
 
-    tokens: Mapped[list["OAuthToken"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    tokens: Mapped[list[OAuthToken]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
 class OAuthClient(Base):
@@ -52,7 +58,7 @@ class OAuthClient(Base):
     client_secret_hash: Mapped[str] = mapped_column(String(255))
     client_name: Mapped[str] = mapped_column(String(200))
     redirect_uris: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=utcnow)
 
 
 class OAuthToken(Base):
@@ -74,7 +80,7 @@ class AuditLog(Base):
     __tablename__ = "audit_log"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    timestamp: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow, index=True)
+    timestamp: Mapped[dt.datetime] = mapped_column(DateTime, default=utcnow, index=True)
     username: Mapped[str] = mapped_column(String(100), nullable=True)
     tool_name: Mapped[str] = mapped_column(String(150))
     arguments: Mapped[str] = mapped_column(Text)

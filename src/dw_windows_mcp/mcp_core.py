@@ -7,7 +7,7 @@ import contextvars
 import json
 import logging
 
-import mcp.types as types
+from mcp import types
 from mcp.server.lowlevel import Server
 
 from .auth.rbac import PermissionError_
@@ -66,7 +66,7 @@ async def dispatch_call_tool(user: User, name: str, arguments: dict, client_addr
         return [types.TextContent(type="text", text=json.dumps({"error": "permission_denied", "detail": str(e)}, ensure_ascii=False))]
     except ToolExecutionError as e:
         return [types.TextContent(type="text", text=json.dumps({"error": "unknown_tool", "detail": str(e)}, ensure_ascii=False))]
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.exception("Tool-Ausführung fehlgeschlagen: %s", name)
         return [types.TextContent(type="text", text=json.dumps({"error": "execution_error", "detail": str(e)}, ensure_ascii=False))]
 

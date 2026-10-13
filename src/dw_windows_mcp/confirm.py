@@ -17,20 +17,20 @@ import json
 import secrets
 
 from .config import settings
-from .db import Role, User
+from .db import Role, User, utcnow
 
-_pending: dict[str, "PendingConfirmation"] = {}
+_pending: dict[str, PendingConfirmation] = {}
 
 
 class PendingConfirmation:
-    __slots__ = ("token", "tool_name", "args_hash", "username", "expires_at")
+    __slots__ = ("args_hash", "expires_at", "token", "tool_name", "username")
 
     def __init__(self, token: str, tool_name: str, args_hash: str, username: str):
         self.token = token
         self.tool_name = tool_name
         self.args_hash = args_hash
         self.username = username
-        self.expires_at = dt.datetime.utcnow() + dt.timedelta(seconds=settings.confirm_token_ttl_seconds)
+        self.expires_at = utcnow() + dt.timedelta(seconds=settings.confirm_token_ttl_seconds)
 
 
 class ConfirmationRequired(Exception):
@@ -74,7 +74,7 @@ def require_confirmation(
         or pending.tool_name != tool_name
         or pending.args_hash != args_hash
         or pending.username != user.username
-        or dt.datetime.utcnow() > pending.expires_at
+        or utcnow() > pending.expires_at
     ):
         new_token = secrets.token_urlsafe(24)
         _pending[new_token] = PendingConfirmation(new_token, tool_name, args_hash, user.username)
@@ -88,7 +88,7 @@ def require_confirmation(
 
 
 def purge_expired() -> None:
-    now = dt.datetime.utcnow()
+    now = utcnow()
     expired = [t for t, p in _pending.items() if now > p.expires_at]
     for t in expired:
         del _pending[t]

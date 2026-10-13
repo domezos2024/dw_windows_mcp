@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import functools
 import inspect
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from ..audit import log as audit_log
 from ..auth.rbac import PermissionError_, ToolSpec, require_permission
 from ..confirm import ConfirmationRequired, require_confirmation
 from ..db import User
 
-_REGISTRY: dict[str, "RegisteredTool"] = {}
+_REGISTRY: dict[str, RegisteredTool] = {}
 
 
 @dataclass
@@ -97,7 +98,7 @@ def invoke_tool(user: User, tool_name: str, arguments: dict, client_addr: str | 
         sig = inspect.signature(reg.func)
         accepted = {k: v for k, v in arguments.items() if k in sig.parameters}
         result = reg.func(user, **accepted)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         audit_log(user.username, tool_name, arguments, "error", str(e), client_addr)
         raise
 
@@ -106,13 +107,15 @@ def invoke_tool(user: User, tool_name: str, arguments: dict, client_addr: str | 
 
 
 # Import tool modules so their @tool decorators register on package import.
-from . import system  # noqa: E402,F401
-from . import filesystem  # noqa: E402,F401
-from . import process  # noqa: E402,F401
-from . import registry  # noqa: E402,F401
-from . import services  # noqa: E402,F401
-from . import power  # noqa: E402,F401
-from . import network  # noqa: E402,F401
-from . import install  # noqa: E402,F401
-from . import clipboard  # noqa: E402,F401
-from . import gui  # noqa: E402,F401
+from . import (
+    clipboard,  # noqa: F401
+    filesystem,  # noqa: F401
+    gui,  # noqa: F401
+    install,  # noqa: F401
+    network,  # noqa: F401
+    power,  # noqa: F401
+    process,  # noqa: F401
+    registry,  # noqa: F401
+    services,  # noqa: F401
+    system,  # noqa: F401
+)

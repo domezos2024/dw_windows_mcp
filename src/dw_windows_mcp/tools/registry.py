@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import sys
 
-from ..db import User
 from ..auth.rbac import ToolCategory
+from ..db import User
 from . import tool
 
 if sys.platform == "win32":

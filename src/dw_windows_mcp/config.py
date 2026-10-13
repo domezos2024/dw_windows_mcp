@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import ClassVar
 
 
 def _data_dir() -> Path:
@@ -27,7 +28,7 @@ class Settings:
 
     secret_key: str = os.environ.get("DW_MCP_SECRET_KEY", "")
 
-    allowed_fs_roots: list[str] = [
+    allowed_fs_roots: ClassVar[list[str]] = [
         p for p in os.environ.get("DW_MCP_FS_ROOTS", "").split(";") if p
     ]
 

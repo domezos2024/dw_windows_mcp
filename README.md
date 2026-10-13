@@ -1,5 +1,9 @@
 # dw-windows-mcp
 
+🇩🇪 Deutsch | [🇬🇧 English](README.en.md)
+
+Ausführliche Installationsanleitung: [docs/INSTALL.de.md](docs/INSTALL.de.md) · [docs/INSTALL.en.md](docs/INSTALL.en.md)
+
 MCP-Server, der die volle Kontrolle über ein Windows-11-System und dessen
 Internetverbindung als MCP-Tools bereitstellt — nutzbar lokal (stdio, z.B. aus
 Claude Desktop/Code) und remote (HTTP/SSE mit OAuth2, z.B. vom Smartphone).
@@ -113,6 +117,17 @@ curl -X POST http://HOST:8765/oauth/token \
 Der zurückgegebene `access_token` wird als `Authorization: Bearer <token>` beim
 Verbindungsaufbau zu `GET /sse` gesendet.
 
+## Autostart (optional)
+
+```bash
+dw-windows-mcp install-autostart --host 0.0.0.0 --port 8765
+dw-windows-mcp autostart-status
+dw-windows-mcp uninstall-autostart
+```
+
+Legt eine Windows-Aufgabenplanung-Task an, die `dw-windows-mcp run-http` bei
+der Anmeldung des aktuellen Benutzers startet. Details: [docs/INSTALL.de.md](docs/INSTALL.de.md#6-autostart-einrichten-optional).
+
 ## CLI-Übersicht
 
 ```
@@ -124,6 +139,9 @@ dw-windows-mcp oauth-register-client <name> [--redirect-uri ...]
 dw-windows-mcp audit-tail [-n 50]
 dw-windows-mcp run-stdio
 dw-windows-mcp run-http [--host 0.0.0.0] [--port 8765]
+dw-windows-mcp install-autostart [--host 0.0.0.0] [--port 8765]
+dw-windows-mcp uninstall-autostart
+dw-windows-mcp autostart-status
 ```
 
 ## Lizenz

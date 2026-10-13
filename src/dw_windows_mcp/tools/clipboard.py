@@ -1,8 +1,8 @@
 """Clipboard access via pywin32."""
 from __future__ import annotations
 
-from ..db import User
 from ..auth.rbac import ToolCategory
+from ..db import User
 from . import tool
 
 

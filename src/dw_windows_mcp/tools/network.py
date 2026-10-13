@@ -6,8 +6,8 @@ import subprocess
 
 import psutil
 
-from ..db import User
 from ..auth.rbac import ToolCategory
+from ..db import User
 from . import tool
 
 
@@ -50,5 +50,5 @@ def connections(user: User) -> list[dict]:
     description="Pingt einen Host an (4 Pakete).",
 )
 def ping(user: User, host: str) -> dict:
-    proc = subprocess.run(["ping", "-n", "4", host], capture_output=True, text=True, timeout=20)
+    proc = subprocess.run(["ping", "-n", "4", host], check=False, capture_output=True, text=True, timeout=20)
     return {"host": host, "output": proc.stdout, "reachable": proc.returncode == 0}
